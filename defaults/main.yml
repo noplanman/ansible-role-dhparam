@@ -1,0 +1,6 @@
+---
+dhparam_create_on_local_machine: no
+dhparam_size: 4096
+dhparam_path: "/etc/ssl/certs/dhparam-{{ dhparam_size }}.pem"
+# (no, reboot, hourly, daily, weekly, monthly, annually, yearly)
+dhparam_periodic_update: no

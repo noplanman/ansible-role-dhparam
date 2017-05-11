@@ -1,0 +1,7 @@
+---
+- name: Ensure cron job is configured to update the DH params periodically.
+  cron:
+    name: "dhparam_periodic_update"
+    job: "'{{ dhparam__openssl_binary | default('openssl') }}' dhparam -out '{{ dhparam_path }}' {{ dhparam_size }} > /dev/null"
+    state: "{{ dhparam_periodic_update | ternary('present', 'absent') }}"
+    special_time: "{{ (dhparam_periodic_update is string) | ternary(dhparam_periodic_update, 'monthly') }}"

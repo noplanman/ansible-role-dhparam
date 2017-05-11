@@ -1,0 +1,24 @@
+---
+- hosts: localhost
+  connection: local
+  become: yes
+  roles: [../../]
+  vars:
+    dhparam_create_on_local_machine: no
+    dhparam_size: 1024
+    dhparam_path: "/etc/ssl/certs/dhparam-custom.pem"
+    dhparam_periodic_update: weekly
+  post_tasks:
+    - name: Check if DH param generated.
+      stat:
+        path: "/etc/ssl/certs/dhparam-custom.pem"
+      register: dhparam__test_dhparam_file
+      failed_when: not dhparam__test_dhparam_file.stat.exists
+    - name: Set fact to compare cron output against.
+      set_fact:
+        dhparam__test_dhparam_cron_check: "@weekly '{{ dhparam__openssl_binary }}' dhparam -out '/etc/ssl/certs/dhparam-custom.pem' 1024 > /dev/null"
+    - name: Check if crontab installed.
+      command: crontab -l
+      register: dhparam__test_dhparam_cron
+      changed_when: false
+      failed_when: "dhparam__test_dhparam_cron_check not in dhparam__test_dhparam_cron.stdout"

@@ -1,0 +1,79 @@
+---
+- name: Check if DH param already exists.
+  stat:
+    path: "{{ dhparam_path }}"
+  register: dhparam__remote_file
+
+- name: Remember if generating on local or remote.
+  set_fact:
+    dhparam__create_local: "{{ dhparam_create_on_local_machine and not dhparam__remote_file.stat.exists }}"
+    dhparam__create_remote: "{{ not dhparam_create_on_local_machine and not dhparam__remote_file.stat.exists }}"
+
+# Using local machine.
+- block:
+
+  - name: Check openssl is installed on local machine.
+    shell: openssl version | awk '{print $2}'
+    changed_when: false
+    register: dhparam__local_openssl_version
+    become: no
+    delegate_to: localhost
+
+  - name: Assert that required software is installed.
+    assert:
+      that: 'dhparam__local_openssl_version is defined and dhparam__local_openssl_version.stdout'
+      msg: 'OpenSSL must be installed on local machine!'
+    become: no
+    delegate_to: localhost
+
+  - name: Create temporary file for dhparam.pem.
+    tempfile:
+      path: "{{ playbook_dir }}"
+    register: dhparam__tmp_dhparam_file
+    changed_when: no
+    become: no
+    delegate_to: localhost
+
+  - name: Generate Diffie-Hellman params on local machine.
+    command: openssl dhparam -out "{{ dhparam__tmp_dhparam_file.path }}" {{ dhparam_size }}
+    become: no
+    delegate_to: localhost
+
+  - name: Copy Diffie-Hellman params to host.
+    copy:
+      src: "{{ dhparam__tmp_dhparam_file.path }}"
+      dest: "{{ dhparam_path }}"
+      owner: root
+      group: root
+
+  - name: Remove temporary file for dhparam.pem.
+    file:
+      path: "{{ dhparam__tmp_dhparam_file.path }}"
+      state: absent
+    changed_when: no
+    become: no
+    delegate_to: localhost
+
+  when: dhparam__create_local
+
+# Using remote machine.
+- block:
+
+  - name: Ensure openssl is installed.
+    apt:
+      name: openssl
+
+  - name: Find path to the OpenSSL binary.
+    command: which openssl
+    register: dhparam__which_openssl
+    changed_when: false
+
+  - name: Remember path to OpenSSL binary.
+    set_fact:
+      dhparam__openssl_binary: "{{ dhparam__which_openssl.stdout }}"
+
+  - name: Generate Diffie-Hellman params on remote machine.
+    command: "'{{ dhparam__openssl_binary }}' dhparam -out '{{ dhparam_path }}' {{ dhparam_size }}"
+    when: dhparam__create_remote
+
+  when: dhparam__create_remote or dhparam_periodic_update
