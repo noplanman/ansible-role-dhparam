@@ -5,9 +5,12 @@ Exclamation symbols (:exclamation:) note something of importance e.g. breaking c
 
 ## [Unreleased]
 ### Added
-- First minor version that contains the basic functionality.
 ### Changed
 ### Deprecated
 ### Removed
 ### Fixed
 ### Security
+
+## [0.1.0] - 2017-05-12
+### Added
+- First minor version that contains the basic functionality.
