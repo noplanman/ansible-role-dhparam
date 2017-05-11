@@ -3,7 +3,7 @@ galaxy_info:
   author: Armando Lüscher
   description: Set up Diffie-Hellman parameters on a Debian-like system.
   license: MIT
-  min_ansible_version: 2.0.0.0
+  min_ansible_version: 2.3.0.0
   platforms:
     - name: Ubuntu
       versions:
